@@ -1,13 +1,11 @@
-"""Prepare and split dataset for Assignment 10 Lane Segmentation.
+"""Prepare and split the 1,000-frame dataset_seg for Lane Segmentation.
 
-Splits data 65% train / 35% val as specified in lecture notes.
-Source:
-  - Images: C:\\Assignment\\Lab_R\\Assignment4\\frames_680_to_1300
-  - Labels: C:\\Assignment\\Lab_R\\Assignment4\\Combined_lane_segment\\labels\\polygon (or Polygon_lane_segment)
-Extracts single-class 'lane' polygons (class 4 -> remapped to class 0 for clean single-class YOLO-seg format).
+Dataset: c:\\Assignment\\Lab_R\\Last_assignment\\dataset_seg
+Split: 65% Train (650 frames) / 35% Val (350 frames)
+Target Class in dataset_seg: Class 3 ('lane' road surface polygon)
+Remaps target class to class 0 for clean single-class YOLO-seg format.
 """
 import argparse
-import glob
 import os
 import shutil
 import random
@@ -15,12 +13,12 @@ from pathlib import Path
 
 
 def prepare_dataset(
-    images_dir=r"C:\Assignment\Lab_R\Assignment4\frames_680_to_1300",
-    labels_dir=r"C:\Assignment\Lab_R\Assignment4\Combined_lane_segment\labels\polygon",
+    images_dir=r"C:\Assignment\Lab_R\Last_assignment\dataset_seg\images\all_images",
+    labels_dir=r"C:\Assignment\Lab_R\Last_assignment\dataset_seg\labels\all_images",
     output_dir=r"C:\Assignment\Lab_R\Last_assignment\data",
     train_ratio=0.65,
     seed=42,
-    target_class=4,
+    target_class=3,
 ):
     images_dir = Path(images_dir)
     labels_dir = Path(labels_dir)
@@ -31,7 +29,10 @@ def prepare_dataset(
     train_lbl_dir = output_dir / "labels" / "train"
     val_lbl_dir = output_dir / "labels" / "val"
 
+    # Reset output directory cleanly
     for d in [train_img_dir, val_img_dir, train_lbl_dir, val_lbl_dir]:
+        if d.exists():
+            shutil.rmtree(d)
         d.mkdir(parents=True, exist_ok=True)
 
     img_files = sorted(list(images_dir.glob("*.jpg")) + list(images_dir.glob("*.png")))
@@ -42,9 +43,9 @@ def prepare_dataset(
         if lbl_p.exists():
             valid_pairs.append((img_p, lbl_p))
 
-    print(f"Found {len(valid_pairs)} valid (image, label) pairs.")
+    print(f"Found {len(valid_pairs)} valid (image, label) pairs in dataset_seg.")
     if not valid_pairs:
-        raise RuntimeError("No matching image/label pairs found!")
+        raise RuntimeError(f"No matching pairs found in {images_dir} and {labels_dir}")
 
     random.seed(seed)
     random.shuffle(valid_pairs)
@@ -56,13 +57,12 @@ def prepare_dataset(
 
     print(f"Dataset split (ratio {train_ratio:.0%} / {1-train_ratio:.0%}):")
     print(f"  - Train: {len(train_pairs)} samples")
-    print(f"  - Val/Test: {len(val_pairs)} samples")
+    print(f"  - Val / Test: {len(val_pairs)} samples")
 
     def process_and_copy(pairs, dest_img_dir, dest_lbl_dir):
         for img_p, lbl_p in pairs:
             shutil.copy2(img_p, dest_img_dir / img_p.name)
 
-            # Filter polygons for target_class and remap to class 0
             filtered_lines = []
             with open(lbl_p, "r", encoding="utf-8") as f:
                 for line in f:
@@ -70,7 +70,6 @@ def prepare_dataset(
                     if len(parts) >= 7:
                         cls_id = int(parts[0])
                         if cls_id == target_class:
-                            # Remap to 0 for single-class lane segmentation
                             new_line = "0 " + " ".join(parts[1:]) + "\n"
                             filtered_lines.append(new_line)
 
@@ -78,10 +77,10 @@ def prepare_dataset(
             with open(out_lbl, "w", encoding="utf-8") as f:
                 f.writelines(filtered_lines)
 
-    print("Copying and formatting train set...")
+    print("Formatting and writing train split...")
     process_and_copy(train_pairs, train_img_dir, train_lbl_dir)
 
-    print("Copying and formatting val set...")
+    print("Formatting and writing validation/test split...")
     process_and_copy(val_pairs, val_img_dir, val_lbl_dir)
 
     # Write data.yaml
@@ -96,19 +95,19 @@ names:
     with open(output_dir / "data.yaml", "w", encoding="utf-8") as f:
         f.write(yaml_content)
 
-    print(f"Dataset successfully prepared in {output_dir}")
-    print(f"  - Train images: {len(train_pairs)}")
-    print(f"  - Val images:   {len(val_pairs)}")
+    print(f"Done! Dataset ready in '{output_dir}'.")
+    print(f"  Train images: {len(train_pairs)}")
+    print(f"  Val images:   {len(val_pairs)}")
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--images-dir", default=r"C:\Assignment\Lab_R\Assignment4\frames_680_to_1300")
-    parser.add_argument("--labels-dir", default=r"C:\Assignment\Lab_R\Assignment4\Combined_lane_segment\labels\polygon")
+    parser.add_argument("--images-dir", default=r"C:\Assignment\Lab_R\Last_assignment\dataset_seg\images\all_images")
+    parser.add_argument("--labels-dir", default=r"C:\Assignment\Lab_R\Last_assignment\dataset_seg\labels\all_images")
     parser.add_argument("--output-dir", default=r"C:\Assignment\Lab_R\Last_assignment\data")
     parser.add_argument("--train-ratio", type=float, default=0.65)
     parser.add_argument("--seed", type=int, default=42)
-    parser.add_argument("--target-class", type=int, default=4)
+    parser.add_argument("--target-class", type=int, default=3)
     args = parser.parse_args()
 
     prepare_dataset(

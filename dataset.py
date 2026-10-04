@@ -38,7 +38,7 @@ def label_path_for_image(image_path, labels_dir):
     return Path(labels_dir) / f"{Path(image_path).stem}.txt"
 
 
-def load_yolo_seg_polygons(label_path, img_w, img_h, target_classes=(0, 4), ignore_classes=(3,)):
+def load_yolo_seg_polygons(label_path, img_w, img_h, target_classes=(0,), ignore_classes=None):
     """Parse a YOLO-seg label file into a list of int32 pixel-coordinate polygons."""
     label_path = Path(label_path)
     polygons = []
@@ -94,7 +94,7 @@ def augment_image(image):
 
 
 class LaneSegDataset(Dataset):
-    def __init__(self, images_dir, labels_dir, img_size=48, augment=False, preload=True, target_classes=(0, 4)):
+    def __init__(self, images_dir, labels_dir, img_size=48, augment=False, preload=True, target_classes=(0,)):
         self.images = list_images(images_dir)
         self.labels_dir = Path(labels_dir)
         self.img_size = img_size
