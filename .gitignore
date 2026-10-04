@@ -15,8 +15,9 @@ runs/
 # Checkpoints (can be tracked or ignored; best.pt is ~30MB)
 # checkpoints/
 
-# Data images (if large)
-# data/
+# Data images & raw datasets (large files; host on PSU Storage/Drive)
+data/
+dataset_seg/
 
 # Teacher reference slides and lecture notes (do not commit)
 pdf_slides/
