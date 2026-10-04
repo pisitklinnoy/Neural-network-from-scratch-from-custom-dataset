@@ -17,3 +17,10 @@ runs/
 
 # Data images (if large)
 # data/
+
+# Teacher reference slides and lecture notes (do not commit)
+pdf_slides/
+*.pdf
+Assignment-10 Rattachai*.pdf
+Assignment-10.txt
+
